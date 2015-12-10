@@ -6,18 +6,36 @@ def get_sha str
 	end
 end
 
-author = ARGV[0]
+def export filename="commits.txt", data
+	new_line = "\n"
+	80.times do
+		new_line << "="
+	end
+	begin
+		fp = open(filename, 'a')
+		fp.write(data)
+		fp.write(new_line)
+	rescue Exception => e
+		puts e.message
+	end
+end
+
+author = ARGV[0].to_s
 if author.nil?
 	puts "Argument missing"
 else
-	commits = %x{'git show #{author}'}
+	cmd = "git log --author=#{author}"
+	commits = IO.popen("#{cmd}").readlines
 	if commits.empty?
 		puts "#{author} doesnot have any commits"
 	else
-		commits.split('\n').each do |line|
+		commits.each do |line|
 			sha = get_sha(line)
-			log = %x{'git log #{sha}'}
-			puts log
+			if !sha.nil?
+				cmd = "git show #{sha}"
+				log = IO.popen(cmd).readlines.join("")
+				export log
+			end
 		end
 	end
 end
